@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import api from '../../services/api'
 import { distanceInWords } from 'date-fns'
 import pt from 'date-fns/locale/pt'
+import Dropzone from 'react-dropzone'
 
 import { MdInsertDriveFile } from 'react-icons/md'
 import './styles.css'
@@ -15,6 +16,17 @@ export default class Box extends Component {
 
     this.setState({ box: response.data })
   }
+
+  handleUpload = files => {
+    files.forEach(file => {
+      const data = new FormData()
+      const box = this.props.match.params.id
+
+      data.append('file', file)
+      api.post(`boxes/${box}/files`, data)
+    })
+  }
+
   render() {
     return (
       <div id="box-container">
@@ -22,9 +34,18 @@ export default class Box extends Component {
           <img src={logo} />
           <h1>{this.state.box.title}</h1>
         </header>
+
+        <Dropzone onDropAccepted={this.handleUpload}>
+          {({ getRootProps, getInputProps }) => (
+            <div className="upload" { ...getRootProps()}>
+              <input { ...getInputProps()} />
+              <p>Arraste arquivos ou clique aqui!</p>
+            </div>
+          )}
+        </Dropzone>
         <ul>
           { this.state.box.files && this.state.box.files.map( file => (
-            <li>
+            <li key={file._id}>
               <a className="fileInfo" href={file.url} target="_blank">
                 <MdInsertDriveFile size={24} color="#A5CFFF" />
                 <strong>{file.title}</strong>
