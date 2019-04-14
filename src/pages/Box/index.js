@@ -3,6 +3,7 @@ import api from '../../services/api'
 import { distanceInWords } from 'date-fns'
 import pt from 'date-fns/locale/pt'
 import Dropzone from 'react-dropzone'
+import socket from 'socket.io-client'
 
 import { MdInsertDriveFile } from 'react-icons/md'
 import './styles.css'
@@ -10,13 +11,27 @@ import logo from '../../assets/logo.svg'
 
 export default class Box extends Component {
   state = { box: {} }
-  async componentDidMount() {
+
+  async componentDidMount() { 
+    this.subscribeToNewFiles()
+
     const box = this.props.match.params.id
     const response = await api.get(`boxes/${box}`)
 
     this.setState({ box: response.data })
   }
 
+  subscribeToNewFiles = () => {
+    const box = this.props.match.params.id
+    const io = socket('https://dropboxcloneapi.herokuapp.com')
+
+    io.emit("connectRoom", box)
+    io.on("file", data => {
+      this.setState({
+        box: { ...this.setState.box, files: [data, ...this.state.box.files] }
+      })
+    })
+  }
   handleUpload = files => {
     files.forEach(file => {
       const data = new FormData()
